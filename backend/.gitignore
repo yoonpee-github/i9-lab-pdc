@@ -131,4 +131,4 @@ dmypy.json
 .pyre/
 
 # uploaded files
-uploaded_files/
+# uploaded_files/

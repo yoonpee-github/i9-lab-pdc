@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>LINE Chat</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,700">
+    <link rel="stylesheet" href="https://static.line-scdn.net/font-awesome/edge/5.11.2/pro/css/all.min.css">
+    <link rel="stylesheet" href="https://static.line-scdn.net/laicon/edge/16.14/laicon.min.css">
+    <link rel="stylesheet" href="https://static.line-scdn.net/flag-icon-css/edge/3.2.1/css/flag-icon.min.css">
+    <link rel="stylesheet" href="https://static.line-scdn.net/koromo/edge/2.1/koromo.css">
+    <link rel="shortcut icon" type="image/x-icon" href="https://vos.line-scdn.net/line-oa-crm-pc/favicon.ico">
+    <script type="module" crossorigin src="https://vos.line-scdn.net/line-oa-crm-pc/js/main.tLdcZOeB.js"></script>
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.@babel.runtime.ByHv0Tdm.js">
+    <link rel="modulepreload" crossorigin href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.vue.C0ki36MB.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.vue-i18n.DTagvpNG.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.@intlify.shared.CyD0GI--.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.@intlify.message-compiler.BZpfwIQt.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.@intlify.core-base.BISf4owP.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.vue-i18n-bridge.BOkVU4vA.js">
+    <link rel="modulepreload" crossorigin href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.vuex.D82KMJQA.js">
+    <link rel="modulepreload" crossorigin href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.axios.BS9_udf0.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.vue-router.ByX1tB1P.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.@lit.reactive-element.D_0_JbGU.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.lit-html.BXzhJpvr.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.lit-element.DqjjEG0L.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.@linecorp.textarea-ex.BuXkcx2h.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.@linecorp.emojipack.CLz0F-7L.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.@linecorp.escape-html-and.BdnBw1Mz.js">
+    <link rel="modulepreload" crossorigin href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.runes.BLT3AeDQ.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.@linecorp.line-web-messenger-sdk.BpyuO37B.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.@vue.devtools-api.CRAb-KIx.js">
+    <link rel="modulepreload" crossorigin href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.pinia.DLaowXpD.js">
+    <link rel="modulepreload" crossorigin href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.bowser.CeVySLxj.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.@linecorp.image-size-for-browser.B5QI7Keq.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.date-fns.-3UHMpSH.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.@linecorp.now.Bln5T329.js">
+    <link rel="modulepreload" crossorigin href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.uuid.BZ6TByt2.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.proxy-polyfill.zA5rfJGH.js">
+    <link rel="modulepreload" crossorigin href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.uid.DYCVb_Ru.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.@linecorp.biz-cms-crm-bridge.CFYLD87h.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.crypto-js.D_rP_Mks.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.@linecorp.biz-cms-utility.DGtSFvdE.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.lodash-es.BsvuKPjf.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.@lineoa.biz-native-picker.DSydAeZG.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.@linecorp.uts.DC_u7aj5.js">
+    <link rel="modulepreload" crossorigin href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.lodash.BL189yxP.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.vue-linkable.D87Upclw.js">
+    <link rel="modulepreload" crossorigin href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.imask.kOf1CHsi.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.vue-active-element.CNzOBrOs.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.@linecorp.koromo-vue.ysRG_30o.js">
+    <link rel="modulepreload" crossorigin href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.fflate.DL_Fk74D.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.clipboard.B73KZdOr.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.popper.js.B72Ln0qd.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.@linecorp.biz-cms-flex-renderer.C7YKjEB0.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.@tanstack.query-core.BIR596ST.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.@tanstack.vue-query.CF91fVwX.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.big-integer.Dbu4LpEG.js">
+    <link rel="modulepreload" crossorigin href="https://vos.line-scdn.net/line-oa-crm-pc/js/cms.CmiVHr0D.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.portal-vue.BVC25ybo.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.vue-frag.DPIDCWXQ.js">
+    <link rel="modulepreload" crossorigin href="https://vos.line-scdn.net/line-oa-crm-pc/js/tagApi.BqaHtsou.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/ProfileImageMixin.BZBp9on-.js">
+    <link rel="modulepreload" crossorigin href="https://vos.line-scdn.net/line-oa-crm-pc/js/help.BkcteAKz.js">
+    <link rel="modulepreload" crossorigin
+        href="https://vos.line-scdn.net/line-oa-crm-pc/js/vendor.vuex-router-sync.CsRkVgbF.js">
+    <link rel="stylesheet" href="https://vos.line-scdn.net/line-oa-crm-pc/css/vendor.@linecorp.BvQpRKDe.css">
+    <link rel="stylesheet" href="https://vos.line-scdn.net/line-oa-crm-pc/css/cms.Lza2BYjw.css">
+    <link rel="stylesheet" href="https://vos.line-scdn.net/line-oa-crm-pc/css/main.CsZcgC-Q.css">
+</head>
+
+<body class="user-select-none">
+    <div id="appLoading" class="text-center">
+        <div aria-labelledby="exampleModalCenterTitle" class="modal show" id="exampleModalLoading" role="dialog"
+            tabindex="-1" style="display:block;padding-right:17px">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="w-100 text-center">
+                    <div class="loader loader-primary loader-lg mr-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="app"></div>
+    <script src="https://vos.line-scdn.net/sentry/js/sentry-5.7.1.min.js"></script>
+    <script src="https://vos.line-scdn.net/sentry/js/sentry-vue-5.7.1.min.js"></script>
+    <script>
+        window.Sentry&&Sentry.init({dsn:"https://91b31f43c6ef4ba196f6b2f320b77de4@sentry-uit.line-apps.com/3"})
+    </script>
+    <script>
+        !function(t,n){var e=t.onerror;t._trmq=[],t._trm=function(){t._trmq.push(arguments)};var r="https:"===location.protocol?"https://d.line-scdn.net":"http://d.line-cdn.net",o=n.createElement("script");o.async=1,o.src=r+"/n/_4/torimochi.js/public/v1/release/stable/min/torimochi.js";var c=n.getElementsByTagName("script")[0];c.parentNode.insertBefore(o,c),o.onload=function(){e&&(t.onerror=e)}}(window,document)
+    </script>
+</body>
+
+</html>
