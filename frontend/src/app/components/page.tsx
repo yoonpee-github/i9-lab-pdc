@@ -20,6 +20,7 @@ import {
   Checkbox,
   Spin,
   Tooltip,
+  notification,
   Tag,
   Tabs,
 } from "antd";
@@ -37,6 +38,8 @@ import {
   EditOutlined,
   UploadOutlined,
   MenuUnfoldOutlined,
+  CodepenOutlined,
+  CodeSandboxOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { format } from "date-fns";
@@ -84,6 +87,9 @@ interface DataWi {
   author_insert?: string;
   author_number?: string;
   author?: string;
+  date_of_rcp?: string;
+  link_data?: string;
+  author_file?: string;
 }
 
 const status_data = [
@@ -101,7 +107,7 @@ const quantity_options = ["ฟันบน", "ฟันล่าง"];
 
 const statusTabs = [
   { key: "all", label: "📋 ทั้งหมด", value: "All" },
-  { key: "empty", label: "🆓 ยังไม่ระบุสถานะ", value: "" }, // ✨ เพิ่มตรงนี้
+  // { key: "empty", label: "🆓 ยังไม่ระบุสถานะ", value: "" }, // ✨ เพิ่มตรงนี้
   { key: "wait", label: "🕒 รอช่างมารับงาน", value: "รอช่างมารับงาน" },
   { key: "tech", label: "👨‍🔧 ช่างรับงานแล้ว", value: "ช่างรับงานแล้ว" },
   { key: "wait-send", label: "📦 รอส่ง", value: "งานเสร็จแล้วรอส่ง" },
@@ -173,6 +179,22 @@ const DataTable: React.FC = () => {
   const [qrCodeImageUrl, setQrCodeImageUrl] = useState<string | null>(null);
   const [editingKey, setEditingKey] = useState<string | null>(null); // ✅
   const [inputValues, setInputValues] = useState<{ [key: string]: string }>({});
+  const [isModalFile, setIsModalFile] = useState(false);
+  const [comments1, setComments1] = useState<
+    {
+      author_file: string;
+      comment_file: string;
+      item_id?: string;
+      created_file?: string;
+      upload_commentfile?: string | null;
+    }[]
+  >([]);
+  const [uploadedFile1, setUploadedFile1] = useState<any>(null);
+  const [fileList1, setFileList1] = useState<any[]>([]);
+  const [currentItemId1, setCurrentItemId1] = useState("");
+  const [currentComment1, setCurrentComment1] = useState("");
+  const [editingIndex1, setEditingIndex1] = useState(null);
+  const [editingKey1, setEditingKey1] = useState<string | null>(null); // ✅
 
   const router = useRouter();
 
@@ -197,7 +219,9 @@ const DataTable: React.FC = () => {
             item.pt_ohn?.toLowerCase().includes(searchQuery.toLowerCase())
           : true) &&
         (searchQuerystatus.includes("All") ||
-          searchQuerystatus.includes(item.status_data?.toLowerCase() ?? "")) &&
+          !item.status_data || // <<-- ถ้าไม่มีค่า เอาเลย
+          (item.status_data &&
+            searchQuerystatus.includes(item.status_data.toLowerCase()))) &&
         (searchQueryproduct.includes("All") ||
           searchQueryproduct.includes(item.prd_name?.toLowerCase() ?? "")) &&
         (searchQuerybrcsname.includes("All") ||
@@ -248,8 +272,10 @@ const DataTable: React.FC = () => {
       `"${item.lc_no || ""}"`,
       `"${item.doctor_name || ""}"`,
       `"${item.brc_sname || ""}"`,
-      `"${item.status_data || ""}"`,
-      `"${item.date_of_inserts || ""}"`,
+      `"${item.status_data || "รอช่างมารับงาน"}"`,
+      `"${
+        item.date_of_inserts ? item.date_of_inserts : item.date_of_rcp || ""
+      }"`,
     ]);
 
     const csvContent = [header, ...csvData].map((e) => e.join(",")).join("\n");
@@ -917,6 +943,188 @@ const DataTable: React.FC = () => {
     }
   };
 
+  const handleSaveLinkInsert = async (
+    item_id: string,
+    key: any,
+    value: any
+  ) => {
+    const storedUsername = localStorage.getItem("username");
+
+    if (!value || !storedUsername) {
+      console.error("ข้อมูลไม่ครบ");
+      return;
+    }
+
+    console.log("asd", item_id, value, storedUsername);
+    try {
+      const response = await axiosInstance.post(`/commons/post_link_info`, {
+        item_id,
+        link_data: value,
+        author_link: storedUsername,
+      });
+
+      console.log("บันทึกสำเร็จ", response.data);
+
+      // ปิดโหมดแก้ไขและเคลียร์ค่า input
+      setEditingKey1(null);
+      setInputValues((prev) => {
+        const newValues = { ...prev };
+        delete newValues[key];
+        return newValues;
+      });
+
+      // อัปเดตค่าในตาราง (เช่นให้แสดงค่าใหม่ทันที)
+      const newData = dataSource.map((item) => {
+        if (item.key === key) {
+          return { ...item, author_insert: storedUsername };
+        }
+        return item;
+      });
+      setDataSource(newData);
+    } catch (error) {
+      console.error("เกิดข้อผิดพลาดระหว่างบันทึก", error);
+    }
+    setLoading(true);
+    try {
+      await fetchData();
+      message.success("Save Data successfully.");
+    } catch (err) {
+      setError("Failed to fetch data. Please try again.");
+      message.error("Failed to fetch data.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const showModal1 = async (itemId: any) => {
+    try {
+      setCurrentItemId1(itemId);
+      const response: any = await axiosInstance.get(`/commons/get_file_data`, {
+        params: { item_id: itemId },
+      });
+      if (response.status === 200) {
+        setComments1(response.data);
+        setIsModalFile(true);
+        console.log("setComments1: ", response.data);
+      } else {
+        message.error("Failed to fetch comments.");
+      }
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      message.error("An error occurred while fetching comments.");
+    }
+  };
+
+  const handleOk1 = () => {
+    console.log(
+      "Updated comment for index:",
+      editingIndex1,
+      "Name",
+      currentAuthor,
+      "Value:",
+      currentComment1
+    );
+    setIsModalFile(false);
+  };
+
+  const handleCancel1 = () => {
+    setIsModalFile(false);
+  };
+
+  const CommentItem1 = ({ item }: any) => {
+    const [fileBlobUrl, setFileBlobUrl] = useState("");
+    const fileUrl = item.upload_commentfile
+      ? `${axiosInstancee.defaults.baseURL}${item.upload_commentfile}`
+      : "";
+
+    useEffect(() => {
+      if (!fileUrl) return;
+      console.log("Fetching file from:", fileUrl);
+      const fetchFile = async () => {
+        try {
+          const response = await fetch(fileUrl, {
+            headers: {
+              "ngrok-skip-browser-warning": "69420",
+              "Access-Control-Allow-Origin": "*",
+            },
+          });
+          if (!response.ok) {
+            console.error("Failed to fetch file. Status:", response.status);
+            return;
+          }
+          const blob = await response.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          setFileBlobUrl(blobUrl);
+        } catch (error) {
+          console.error("Error fetching file:", error);
+        }
+      };
+      fetchFile();
+    }, [fileUrl]);
+
+    // ดึงชื่อไฟล์ออกมา เช่น "aaa.stl"
+    const fileName = item.upload_commentfile
+      ? item.upload_commentfile.split("/").pop()
+      : "ไฟล์ไม่พบ";
+
+    return (
+      <List.Item>
+        <strong>{item.author_file} :</strong> {item.comment_file}
+        {fileBlobUrl && (
+          <div style={{ marginTop: "8px" }}>
+            <strong>ไฟล์แนบ:</strong>{" "}
+            <a
+              href={fileBlobUrl}
+              download={fileName}
+              style={{ color: "#1890ff" }}
+            >
+              📄 {fileName}
+            </a>
+          </div>
+        )}
+        <br />
+        <small>
+          Created at:{" "}
+          {moment(item.created_file)
+            .add(7, "hours")
+            .format("DD/MM/YYYY HH:mm:ss น.")}
+        </small>
+      </List.Item>
+    );
+  };
+  const handleStatusIconClick = async (key: string) => {
+    const item = data.find((item) => item.key === key);
+    const storedUsername = localStorage.getItem("username");
+
+    if (item) {
+      // ✅ สลับสถานะ
+      const newStatus =
+        item.status_file === "เช็คไฟล์สแกนแล้ว"
+          ? "พิมพ์ไฟล์สแกนแล้ว"
+          : "เช็คไฟล์สแกนแล้ว";
+
+      setData((prevData) =>
+        prevData.map((item) =>
+          item.key === key ? { ...item, status_file: newStatus } : item
+        )
+      );
+
+      try {
+        const payload: any = {
+          item_id: item.item_id,
+          status_file: newStatus,
+          author_status_file: storedUsername,
+        };
+        if (item.finish_date) {
+          payload.finish_date = item.finish_date;
+        }
+        await axiosInstance.post("/commons/post_status_file", payload);
+      } catch (err) {
+        message.error("Failed to update status");
+      }
+    }
+  };
+
   const columns: ColumnsType<DataWi> = [
     {
       title: "#",
@@ -1150,6 +1358,131 @@ const DataTable: React.FC = () => {
         return dateAObj.getTime() - dateBObj.getTime();
       },
     },
+    // {
+    //   title: "สถานะการผลิต",
+    //   dataIndex: "status_data",
+    //   key: "status_data",
+    //   align: "center",
+    //   width: 65,
+    //   onHeaderCell: () => ({ style: { textAlign: "center" } }),
+    //   render: (_, record) => {
+    //     const formatDate = (text: any) => {
+    //       if (!text) return "";
+    //       const date = new Date(text);
+    //       date.setHours(date.getHours() + 7); //เพิ่ม7ชั่วโมง
+    //       return `${String(date.getDate()).padStart(2, "0")}/${String(
+    //         date.getMonth() + 1
+    //       ).padStart(2, "0")}/${date.getFullYear()} ${String(
+    //         date.getHours()
+    //       ).padStart(2, "0")}:${String(date.getMinutes()).padStart(
+    //         2,
+    //         "0"
+    //       )}:${String(date.getSeconds()).padStart(2, "0")} น.`;
+    //     };
+    //     return (
+    //       <div style={{ textAlign: "center" }}>
+    //         <Tooltip
+    //           title={
+    //             record.date_of_inserts
+    //               ? `Update At : ${formatDate(record.date_of_inserts)} By : ${
+    //                   record.author_status
+    //                 }`
+    //               : "ไม่มีข้อมูล"
+    //           }
+    //         >
+    //           <Select
+    //             value={record.status_data}
+    //             onChange={(value) => handleStatusChange(record.key, value)}
+    //             style={{ width: 150, marginBottom: 8 }}
+    //             dropdownStyle={{ textAlign: "center" }}
+    //             /*</Tooltip>disabled={
+    //               (storedUsername !== "Chanatip" &&
+    //                 storedUsername === "Adminlab" &&
+    //                 restrictedStatusForAdminlabb.includes(
+    //                   record.status_data ?? ""
+    //                 )) ||
+    //               (storedUsername === "Messenger" &&
+    //                 restrictedStatusForMessengerr.includes(
+    //                   record.status_data ?? ""
+    //                 )) ||
+    //               (restrictedUsers.includes(storedUsername ?? "") &&
+    //                 restrictedStatusForRAA.includes(record.status_data ?? ""))
+    //             }*/
+    //           >
+    //             {status_data
+    //               .filter((status) => {
+    //                 if (storedUsername === "Chanatip") {
+    //                   return true;
+    //                 }
+    //                 /*if (
+    //                   (restrictedUsers.includes(storedUsername ?? "") &&
+    //                     restrictedStatusForRA.includes(status)) ||
+    //                   ((status === "ลูกค้ารับงานแล้ว" || status === "แก้งาน") &&
+    //                     record.status_data !== "จัดส่งงานแล้ว")
+    //                 ) {
+    //                   return false;
+    //                 }*/
+
+    //                 if (
+    //                   (restrictedUsers.includes(storedUsername ?? "") &&
+    //                     restrictedStatusForRA.includes(status)) ||
+    //                   (status === "รอช่างมารับงาน" &&
+    //                     [
+    //                       "ช่างรับงานแล้ว",
+    //                       "งานเสร็จแล้วรอส่ง",
+    //                       "จัดส่งงานแล้ว",
+    //                       "ลูกค้ารับงานแล้ว",
+    //                       "แก้งาน",
+    //                     ].includes(record.status_data ?? ""))
+    //                 ) {
+    //                   return false;
+    //                 }
+
+    //                 if (
+    //                   storedUsername === "Messenger" &&
+    //                   (restrictedStatusForMessenger.includes(status) ||
+    //                     (status === "ช่างรับงานแล้ว" &&
+    //                       record.status_data !== "รอช่างมารับงาน") ||
+    //                     (status === "จัดส่งงานแล้ว" &&
+    //                       record.status_data !== "งานเสร็จแล้วรอส่ง"))
+    //                 ) {
+    //                   return false;
+    //                 }
+
+    //                 if (
+    //                   storedUsername === "Adminlab" &&
+    //                   (restrictedStatusForAdminlab.includes(status) ||
+    //                     (status === "งานเสร็จแล้วรอส่ง" &&
+    //                       record.status_data !== "ช่างรับงานแล้ว"))
+    //                 ) {
+    //                   return false;
+    //                 }
+
+    //                 return true;
+    //               })
+    //               .map((status) => (
+    //                 <Option
+    //                   key={status}
+    //                   value={status}
+    //                   style={{ color: getStatusTextColor(status) }}
+    //                 >
+    //                   {status}
+    //                 </Option>
+    //               ))}
+    //           </Select>
+    //         </Tooltip>
+    //         {/* {record.date_of_inserts && (
+    //           <Tooltip title={formatDate(record.date_of_inserts)}>
+    //             <div style={{ fontSize: "12px", color: "#888", cursor: "pointer" }}>
+    //               <h4>อัพเดตเมื่อ :</h4>
+    //               {formatDate(record.date_of_inserts)}
+    //             </div>
+    //           </Tooltip>
+    //         )} */}
+    //       </div>
+    //     );
+    //   },
+    // },
     {
       title: "สถานะการผลิต",
       dataIndex: "status_data",
@@ -1183,38 +1516,16 @@ const DataTable: React.FC = () => {
               }
             >
               <Select
-                value={record.status_data}
+                value={record.status_data || "รอช่างมารับงาน"}
                 onChange={(value) => handleStatusChange(record.key, value)}
                 style={{ width: 150, marginBottom: 8 }}
                 dropdownStyle={{ textAlign: "center" }}
-                /*</Tooltip>disabled={
-                  (storedUsername !== "Chanatip" &&
-                    storedUsername === "Adminlab" &&
-                    restrictedStatusForAdminlabb.includes(
-                      record.status_data ?? ""
-                    )) ||
-                  (storedUsername === "Messenger" &&
-                    restrictedStatusForMessengerr.includes(
-                      record.status_data ?? ""
-                    )) ||
-                  (restrictedUsers.includes(storedUsername ?? "") &&
-                    restrictedStatusForRAA.includes(record.status_data ?? ""))
-                }*/
               >
                 {status_data
                   .filter((status) => {
                     if (storedUsername === "Chanatip") {
                       return true;
                     }
-                    /*if (
-                      (restrictedUsers.includes(storedUsername ?? "") &&
-                        restrictedStatusForRA.includes(status)) ||
-                      ((status === "ลูกค้ารับงานแล้ว" || status === "แก้งาน") &&
-                        record.status_data !== "จัดส่งงานแล้ว")
-                    ) {
-                      return false;
-                    }*/
-
                     if (
                       (restrictedUsers.includes(storedUsername ?? "") &&
                         restrictedStatusForRA.includes(status)) ||
@@ -1229,7 +1540,6 @@ const DataTable: React.FC = () => {
                     ) {
                       return false;
                     }
-
                     if (
                       storedUsername === "Messenger" &&
                       (restrictedStatusForMessenger.includes(status) ||
@@ -1240,7 +1550,6 @@ const DataTable: React.FC = () => {
                     ) {
                       return false;
                     }
-
                     if (
                       storedUsername === "Adminlab" &&
                       (restrictedStatusForAdminlab.includes(status) ||
@@ -1249,7 +1558,6 @@ const DataTable: React.FC = () => {
                     ) {
                       return false;
                     }
-
                     return true;
                   })
                   .map((status) => (
@@ -1364,6 +1672,109 @@ const DataTable: React.FC = () => {
         );
       },
     },
+
+    {
+      title: "บันทึกลิ้งไฟล์สแกน",
+      dataIndex: "link_data",
+      key: "link_data",
+      width: 50,
+      className: "red-border",
+      onHeaderCell: () => ({ style: { textAlign: "center" } }),
+      render: (_, record) => {
+        const isEditing = editingKey1 === record.key;
+
+        return (
+          <div style={{ textAlign: "center" }}>
+            {isEditing ? (
+              <>
+                <Input
+                  type="text"
+                  value={inputValues[record.key] || ""}
+                  onChange={(e) =>
+                    setInputValues({
+                      ...inputValues,
+                      [record.key]: e.target.value,
+                    })
+                  }
+                  size="small"
+                  style={{ width: 100, marginBottom: 4 }}
+                />
+                <br />
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    gap: 8,
+                    marginTop: 4,
+                  }}
+                >
+                  <Button
+                    type="primary"
+                    size="small"
+                    onClick={() =>
+                      handleSaveLinkInsert(
+                        record.item_id,
+                        record.key,
+                        inputValues[record.key]
+                      )
+                    }
+                  >
+                    Save
+                  </Button>
+                  <Button
+                    size="small"
+                    danger
+                    onClick={() => {
+                      setEditingKey1(null);
+                      setInputValues((prev) => {
+                        const newValues = { ...prev };
+                        delete newValues[record.key];
+                        return newValues;
+                      });
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  {record.link_data ? (
+                    <a
+                      href={record.link_data}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {record.link_data}
+                    </a>
+                  ) : (
+                    "-"
+                  )}
+                </div>
+                {!record.link_data && (
+                  <Button
+                    size="small"
+                    type="link"
+                    onClick={() => {
+                      setEditingKey1(record.key);
+                      setInputValues((prev) => ({
+                        ...prev,
+                        [record.key]: record.link_data || "",
+                      }));
+                    }}
+                    style={{ marginTop: 4 }}
+                  >
+                    แก้ไข
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+        );
+      },
+    },
+
     {
       title: "วันที่งานเสร็จ",
       dataIndex: "finish_date",
@@ -1897,6 +2308,118 @@ const DataTable: React.FC = () => {
       ),
     },
   ];
+  // ✅ เงื่อนไขเพิ่ม column flie
+  if (
+    storedUsername === "Adminlab1" ||
+    storedUsername === "Adminlab2" ||
+    storedUsername === "Adminlab3" ||
+    storedUsername === "Lab_Earth" ||
+    storedUsername === "Lab_Benz" ||
+    storedUsername === "Lab_Champ" ||
+    storedUsername === "Lab_Pruk" ||
+    storedUsername === "Lab_Pech"
+  ) {
+    columns.push({
+      title: "เช็คไฟล์สแกน",
+      dataIndex: "status_file",
+      key: "status_file",
+      align: "center",
+      width: 30,
+      className: "red-border",
+      onHeaderCell: () => ({ style: { textAlign: "center" } }),
+      render: (_, record) => {
+        const formatDate = (text: any) => {
+          if (!text) return "";
+          const date = new Date(text);
+          date.setHours(date.getHours() + 7);
+          return `${String(date.getDate()).padStart(2, "0")}/${String(
+            date.getMonth() + 1
+          ).padStart(2, "0")}/${date.getFullYear()} ${String(
+            date.getHours()
+          ).padStart(2, "0")}:${String(date.getMinutes()).padStart(
+            2,
+            "0"
+          )}:${String(date.getSeconds()).padStart(2, "0")} น.`;
+        };
+
+        const getIconColor = (status?: string) => {
+          if (status === "เช็คไฟล์สแกนแล้ว") return "blue";
+          return "gray";
+        };
+
+        const renderIcon = (status?: string) => {
+          if (status === "เช็คไฟล์สแกนแล้ว") {
+            return <CodeSandboxOutlined />;
+          }
+          return <CodepenOutlined />;
+        };
+
+        return (
+          <div style={{ textAlign: "center" }}>
+            <Tooltip
+              title={
+                record.date_of_insertfile
+                  ? `Update At : ${formatDate(
+                      record.date_of_insertfile
+                    )} By : ${record.author_status_file}`
+                  : "ไม่มีข้อมูล"
+              }
+            >
+              <span
+                style={{
+                  fontSize: 24,
+                  color: getIconColor(record.status_file),
+                  cursor: "pointer",
+                  marginBottom: 8,
+                  display: "inline-block",
+                }}
+                onClick={() => handleStatusIconClick(record.key)}
+              >
+                {renderIcon(record.status_file)}
+              </span>
+              <span style={{ fontSize: 12, display: "block", marginTop: 4 }}>
+                {record.author_status_file || ""}
+              </span>
+            </Tooltip>
+          </div>
+        );
+      },
+    });
+    columns.push({
+      title: "flie",
+      dataIndex: "flie",
+      key: "flie",
+      align: "center",
+      width: 40,
+      className: "red-border",
+      onHeaderCell: () => ({ style: { textAlign: "center" } }),
+      render: (text, record, index) => (
+        <div
+          style={{
+            textAlign: "center",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <Button
+            type="primary"
+            icon={<MenuUnfoldOutlined />}
+            onClick={() => showModal1(record.item_id)}
+          />
+          {record.author_file && (
+            <Tag
+              color={record.author_file === storedUsername ? "green" : "red"}
+              style={{ marginTop: "10px" }}
+            >
+              flie
+            </Tag>
+          )}
+        </div>
+      ),
+    });
+  }
+
   return (
     <div
       style={{
@@ -2054,6 +2577,146 @@ const DataTable: React.FC = () => {
                     new Date(b.created_at || 0).getTime()
                 )}
               renderItem={(item) => <CommentItem item={item} />}
+            />
+          </div>
+        </Modal>
+
+        <Modal
+          title="Edit Comment"
+          open={isModalFile}
+          onOk={handleOk1}
+          onCancel={handleCancel1}
+          footer={[
+            <Button key="cancel" onClick={handleCancel1} loading={loading}>
+              Cancel
+            </Button>,
+            <Button
+              key="save"
+              type="primary"
+              loading={loading}
+              onClick={async () => {
+                try {
+                  if (!currentItemId1 || !currentAuthor || !currentComment1) {
+                    message.error("Please fill in all fields before saving.");
+                    return;
+                  }
+                  setLoading(true);
+                  const formData = new FormData();
+                  formData.append("item_id", currentItemId1); // ✅ ตรง
+                  formData.append("author_file", currentAuthor); // ✅ เปลี่ยนเป็น author_file
+                  formData.append("comment_file", currentComment1); // ✅ เปลี่ยนเป็น comment_file
+                  if (uploadedFile1) {
+                    formData.append("image", uploadedFile1); // ✅ ส่งไฟล์จริง
+                  }
+
+                  const response: any = await axiosInstance.post(
+                    "/commons/save_file_comment",
+                    formData,
+                    {
+                      headers: {
+                        "Content-Type": "multipart/form-data",
+                      },
+                    }
+                  );
+                  if (response.data.success) {
+                    setComments1([
+                      ...comments1,
+                      {
+                        item_id: currentItemId1,
+                        author_file: currentAuthor,
+                        comment_file: currentComment1,
+                        upload_commentfile: uploadedFile1
+                          ? URL.createObjectURL(uploadedFile1)
+                          : null,
+                        created_file: response.data.created_at,
+                      },
+                    ]);
+                    setIsModalFile(false);
+                    setCurrentComment1("");
+                    setUploadedFile1(null);
+                    setFileList1([]);
+                    message.success(response.data.message);
+                    notification.success({
+                      key: Date.now(),
+                      message: "Comment Saved",
+                      description: `📝 ${currentComment1}`,
+                      placement: "bottomRight",
+                      duration: 3,
+                    });
+                  }
+                } catch (error) {
+                  console.error("Error saving comment:", error);
+                  message.error("Failed to save comment. Please try again.");
+                } finally {
+                  setLoading(false);
+                }
+              }}
+            >
+              Save
+            </Button>,
+          ]}
+        >
+          <h3>User :</h3>
+          <Spin spinning={loading}>
+            <Input
+              value={currentAuthor ?? ""}
+              readOnly
+              style={{ marginBottom: "16px", fontWeight: "bold" }}
+            />
+          </Spin>
+          <h3>Comment :</h3>
+          <Spin spinning={loading}>
+            <Input.TextArea
+              value={currentComment1}
+              onChange={(e) => setCurrentComment1(e.target.value)}
+              rows={4}
+              placeholder="Enter your comment here..."
+              style={{ marginBottom: "16px" }}
+            />
+          </Spin>
+          <h3>Upload STL File:</h3>
+          <Spin spinning={loading}>
+            <Upload
+              fileList={fileList1}
+              beforeUpload={(file) => {
+                setUploadedFile1(file); // ✅ เก็บไฟล์ object จริง ไม่ต้องเก็บ url
+                setFileList1([
+                  {
+                    uid: file.uid,
+                    name: file.name,
+                    status: "done",
+                    url: URL.createObjectURL(file),
+                    originFileObj: file, // ✅ เพิ่มไว้สำหรับเผื่อใช้
+                  },
+                ]);
+                return false;
+              }}
+              onRemove={() => {
+                setUploadedFile1(null);
+                setFileList1([]);
+              }}
+              accept="*/*" // ✅ รับไฟล์ .stl เท่านั้น
+              listType="text" // ✅ แสดงแบบ text ไม่ใช่รูป
+              maxCount={1}
+            >
+              <Button icon={<UploadOutlined />}>Select STL File</Button>
+            </Upload>
+          </Spin>
+          <div style={{ marginTop: "16px" }}>
+            <strong>Item ID:</strong> {currentItemId1}
+          </div>
+          <div style={{ marginTop: "20px" }}>
+            <h3>All Comments</h3>
+            <List
+              bordered
+              dataSource={comments1
+                .filter((item) => item.item_id === currentItemId1)
+                .sort(
+                  (a, b) =>
+                    new Date(a.created_file || 0).getTime() -
+                    new Date(b.created_file || 0).getTime()
+                )}
+              renderItem={(item) => <CommentItem1 item={item} />}
             />
           </div>
         </Modal>
@@ -2468,6 +3131,7 @@ const DataTable: React.FC = () => {
       </Tabs>
 
       <Table
+        size="small" // ✅ เพิ่มอันนี้
         columns={columns}
         dataSource={data.filter((item) => {
           const itemDate = item.date_of_book
@@ -2481,9 +3145,16 @@ const DataTable: React.FC = () => {
               ? item.Name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 item.pt_ohn?.toLowerCase().includes(searchQuery.toLowerCase())
               : true) &&
+            // (searchQuerystatus.includes("All") ||
+            //   searchQuerystatus.includes(
+            //     item.status_data?.toLowerCase() ?? ""
+            //   ))
             (searchQuerystatus.includes("All") ||
               searchQuerystatus.includes(
-                item.status_data?.toLowerCase() ?? ""
+                (item.status_data
+                  ? item.status_data
+                  : "รอช่างมารับงาน"
+                ).toLowerCase()
               )) &&
             (searchQueryproduct.includes("All") ||
               searchQueryproduct.includes(
@@ -2502,7 +3173,14 @@ const DataTable: React.FC = () => {
                       )
                   )
               )) &&
+            // (!searchQueryDate ||
+            //   (itemDate &&
+            //     (itemDate.isSame(startDate, "day") ||
+            //       itemDate.isAfter(startDate, "day")) &&
+            //     (itemDate.isSame(endDate, "day") ||
+            //       itemDate.isBefore(endDate, "day"))))
             (!searchQueryDate ||
+              !itemDate || // ดึงรายการที่ไม่มีวันที่ด้วย
               (itemDate &&
                 (itemDate.isSame(startDate, "day") ||
                   itemDate.isAfter(startDate, "day")) &&
@@ -2510,6 +3188,17 @@ const DataTable: React.FC = () => {
                   itemDate.isBefore(endDate, "day"))))
           );
         })}
+        rowClassName={(record) => {
+          const today = dayjs();
+          const dateOfRcp = record.date_of_rcp
+            ? dayjs(record.date_of_rcp)
+            : null;
+
+          if (dateOfRcp && dateOfRcp.isSame(today, "day")) {
+            return "highlight-today"; // ใช้ class CSS เปลี่ยนสีแถว
+          }
+          return "";
+        }}
         loading={loading}
         bordered
         pagination={{
@@ -2530,6 +3219,7 @@ const DataTable: React.FC = () => {
         }}
         scroll={{
           x: 2100,
+          y: 500, // ✅ เพิ่ม scrollbar ด้านในแนวตั้ง
         }}
       />
       <div style={{ display: "flex", justifyContent: "flex-end" }}>

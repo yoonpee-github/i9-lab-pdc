@@ -39,3 +39,6 @@ body {
 .edit_table th{
   border: 1px solid rgb(201, 201, 201);
 }
+.highlight-today {
+  background-color: #ffe5e5 !important;
+}

@@ -40,6 +40,9 @@ class DataAll(BaseModel):
     author_insert: Optional[str] = None
     author_date_insert: Optional[datetime] = None
     author: Optional[str] = None
+    date_of_rcp: Optional[datetime] = None
+    link_data: Optional[str] = None
+    author_file: Optional[str] = None
     
 class ListDataAll(BaseModel):
     data: List[DataAll]
@@ -137,5 +140,22 @@ class AuthorInfo(BaseModel):
     item_id: int
     author_number: Optional[int] = None
     author_insert: Optional[str] = None
+
+###################################################################################
+class linkInfo(BaseModel):
+    item_id: int
+    link_data: Optional[str] = None
+    author_link: Optional[str] = None
+
+###################################################################################
+class Dataitemfile(BaseModel):
+    item_id: int
+    author_file: Optional[str] = None
+    comment_file: Optional[str] = None
+    created_file: Optional[datetime] = None 
+    upload_commentfile : Optional[str] = None
+    
+class ListDataitemfile(BaseModel):
+    data:List[Dataitemfile]
 
 ###################################################################################

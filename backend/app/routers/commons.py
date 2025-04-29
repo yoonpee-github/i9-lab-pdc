@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession # type: ignore
 from fastapi.responses import FileResponse # type: ignore
 from typing import AsyncGenerator, List
 from sqlalchemy.sql import text # type: ignore
-from app.schemas.commons import (DataAll, brcName, IsertStatus, Dataitem, imageAll, MassStatus, IsertFinish, Qtydata, DataAll_dentallight, IsertStatus2, AuthorInfo)
+from app.schemas.commons import (DataAll, brcName, IsertStatus, Dataitem, imageAll, MassStatus, IsertFinish, Qtydata, DataAll_dentallight, IsertStatus2, AuthorInfo, linkInfo, Dataitemfile)
 from app.manager import CommonsManager
 from app.functions import api_key_auth
 from pathlib import Path
@@ -95,6 +95,21 @@ def commons_routers(db: AsyncGenerator) -> APIRouter:
             )
 
 ###################################################################################
+    @router.get(
+        "/get_file_data",
+        response_model=List[Dataitemfile],
+        dependencies=[Depends(api_key_auth)],
+    )
+    async def get_file_data(item_id=int, db: AsyncSession = Depends(db)):
+        try:
+            data_comment = await manager.get_file_data(item_id=item_id, db=db)
+            return list(data_comment)
+        except Exception as e:
+            raise HTTPException(
+                status_code=400, detail=f"Error during get data : {e}"
+            )
+        
+###################################################################################
     @router.post(
         "/post_status_data",
         dependencies=[Depends(api_key_auth)],
@@ -118,6 +133,21 @@ def commons_routers(db: AsyncGenerator) -> APIRouter:
         print("hello",item)
         try:
             post_author_info = await manager.post_author_info(item=item, db=db)
+            return {"success": True}
+        except Exception as e:
+            raise HTTPException(
+                status_code=400, detail=f"Error during update : {e}"
+            )
+        
+###################################################################################
+    @router.post(
+        "/post_link_info",
+        dependencies=[Depends(api_key_auth)],
+    )
+    async def post_link_info(item:linkInfo, db: AsyncSession = Depends(db)):
+        print("hello",item)
+        try:
+            post_link_info = await manager.post_link_info(item=item, db=db)
             return {"success": True}
         except Exception as e:
             raise HTTPException(
@@ -369,6 +399,66 @@ def commons_routers(db: AsyncGenerator) -> APIRouter:
     def get_unique_filename(upload_folder: str, filename: str) -> str:
         """
         Generate a unique filename by appending a counter if the file already exists.
+        """
+        base_filename, extension = os.path.splitext(filename)
+        counter = 1
+        unique_filename = filename
+        while os.path.exists(os.path.join(upload_folder, unique_filename)):
+            unique_filename = f"{base_filename}_{counter}{extension}"
+            counter += 1
+        return unique_filename
+    
+##################################################################################
+    
+    @router.post("/save_file_comment")
+    async def save_file_comment(
+        item_id: int = Form(...),
+        author_file: str = Form(...),
+        comment_file: str = Form(...),
+        image: UploadFile = File(None),
+        db: AsyncSession = Depends(db)
+    ):
+        try:
+            save_directory = r"D:/Chanatip/LabPDC/backend/stl_upload"
+            os.makedirs(save_directory, exist_ok=True)
+            
+            upload_commentfile = None
+            if image:
+                # ✅ เช็กชื่อซ้ำก่อนบันทึก
+                unique_filename = get_unique_filename(save_directory, image.filename)
+                image_path = os.path.join(save_directory, unique_filename)
+
+                with open(image_path, "wb") as buffer:
+                    shutil.copyfileobj(image.file, buffer)
+                
+                upload_commentfile = f"/stl_upload/{unique_filename}"
+
+            # ✅ บันทึกชื่อไฟล์จริงที่อัปโหลด (หลังเช็กซ้ำแล้ว)
+            stmt = """
+                INSERT INTO file_lab (item_id, author_file, comment_file, upload_commentfile)
+                VALUES (:item_id, :author_file, :comment_file, :upload_commentfile);
+            """
+            await db.execute(
+                text(stmt),
+                {
+                    "item_id": item_id,
+                    "author_file": author_file,
+                    "comment_file": comment_file,
+                    "upload_commentfile": upload_commentfile,
+                },
+            )
+            await db.commit()
+            return {"success": True, "message": "Comment saved successfully!", "imageUrl": upload_commentfile}
+        
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Error saving comment: {e}")
+
+
+    def get_unique_filename(upload_folder: str, filename: str) -> str:
+        """
+        Generate a unique filename by appending a counter if the file already exists.
+        Example:
+            - ถ้า ESP32.stl มีอยู่แล้ว → จะเป็น ESP32_1.stl, ESP32_2.stl, ...
         """
         base_filename, extension = os.path.splitext(filename)
         counter = 1

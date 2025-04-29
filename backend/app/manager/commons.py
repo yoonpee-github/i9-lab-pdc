@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession # type: ignore
 from app.crud import CommonsCRUD
-from app.schemas.commons import (DataAll, brcName, IsertStatus, Dataitem, CommentData, imageAll, MassStatus, IsertFinish, Qtydata, DataAll_dentallight, IsertStatus2, AuthorInfo)
+from app.schemas.commons import (DataAll, brcName, IsertStatus, Dataitem, CommentData, imageAll, MassStatus, IsertFinish, Qtydata, DataAll_dentallight, IsertStatus2, AuthorInfo, linkInfo, Dataitemfile)
 import json
 
 class CommonsManager:
@@ -53,6 +53,9 @@ class CommonsManager:
                     author_insert=r[key_index.get("author_insert")],
                     author_date_insert=r[key_index.get("author_date_insert")],
                     author=r[key_index.get("author")],
+                    date_of_rcp=r[key_index.get("date_of_rcp")],
+                    link_data=r[key_index.get("link_data")],
+                    author_file=r[key_index.get("author_file")],
                 )
             )
         return return_list
@@ -116,6 +119,27 @@ class CommonsManager:
         return return_list
     
 ###################################################################################
+    async def get_file_data(
+        self,
+        item_id=int,
+        db: AsyncSession = None,
+    ):
+        res = await self.crud.get_file_data(db=db, item_id=item_id)
+        return_list = []
+        for r in res:
+            key_index = r._key_to_index
+            return_list.append(
+                Dataitemfile(
+                    item_id=r[key_index["item_id"]],
+                    author_file=r[key_index["author_file"]],
+                    comment_file=r[key_index["comment_file"]],
+                    created_file=r[key_index["created_file"]],
+                    upload_commentfile=r[key_index["upload_commentfile"]],
+                )
+            )
+        return return_list
+    
+###################################################################################
     async def post_status_data(
         self,
         item: IsertStatus,
@@ -135,6 +159,15 @@ class CommonsManager:
         await self.crud.post_author_info(db=db, item=item)
         return True
     
+###################################################################################
+    async def post_link_info(
+        self,
+        item: linkInfo,
+        db: AsyncSession = None,
+    ):
+        print("edit", item)
+        await self.crud.post_link_info(db=db, item=item)
+        return True
 
 ###################################################################################
     async def post_status_file(

@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession # type: ignore
 from sqlalchemy.sql import text # type: ignore
-from app.schemas.commons import (IsertStatus,MassStatus,IsertFinish,Qtydata,IsertStatus2,AuthorInfo)
+from app.schemas.commons import (IsertStatus,MassStatus,IsertFinish,Qtydata,IsertStatus2,AuthorInfo,linkInfo)
 from typing import List
 
 def convert_result(res):
@@ -71,7 +71,10 @@ class CommonsCRUD:
             author_info.author_number,
             author_info.author_insert,
             author_info.author_date_insert,
-            latest_comments.author
+            latest_comments.author,
+            rcp_info.date_of_rcp,
+            link_info.link_data,
+            latest_file_lab.author_file
         FROM 
             rcp_info
         LEFT JOIN 
@@ -213,6 +216,23 @@ class CommonsCRUD:
                         WHERE ms2.item_id = ms1.item_id
                     )
             ) latest_comments ON rcp_item.item_id = latest_comments.item_id
+        LEFT JOIN 
+            (
+                SELECT 
+                    item_id, 
+                    created_file,
+                    author_file
+                FROM 
+                    file_lab ms1
+                WHERE 
+                    ms1.created_file = (
+                        SELECT MAX(ms2.created_file)
+                        FROM file_lab ms2
+                        WHERE ms2.item_id = ms1.item_id
+                    )
+            ) latest_file_lab ON rcp_item.item_id = latest_file_lab.item_id
+        LEFT JOIN 
+            link_info ON rcp_item.item_id = link_info.item_id
         WHERE 
             DATE(rcp_info.date_of_rcp) BETWEEN :start_date AND :end_date
             AND pt_book.date_of_delete IS NULL
@@ -269,6 +289,21 @@ class CommonsCRUD:
             raise e    
 
 ###################################################################################
+    async def get_file_data(
+        self, item_id: int, db: AsyncSession,
+    ):
+        try:
+            stmt = f"""
+            SELECT item_id, author_file, comment_file, created_file, upload_commentfile
+            FROM file_lab
+            WHERE item_id = :item_id;
+            """
+            rs = await db.execute(text(stmt),{"item_id":item_id})
+            return rs
+        except Exception as e:
+            raise e  
+        
+###################################################################################
     async def post_status_data(self, db: AsyncSession, item:IsertStatus):
         try:
             stmt = f"""
@@ -301,6 +336,26 @@ class CommonsCRUD:
                             "item_id": item.item_id,
                             "author_number": item.author_number,
                             "author_insert": item.author_insert,
+                        }
+                    )
+            await db.commit()
+            return rs
+        except Exception as e:
+            raise e
+        
+###################################################################################        
+    async def post_link_info(self, db: AsyncSession, item:linkInfo):
+        try:
+            stmt = f"""
+            INSERT INTO link_info (item_id, link_data, author_link) 
+            VALUES (:item_id, :link_data, :author_link);
+            """
+            rs = await db.execute(
+                text(stmt),
+                        {
+                            "item_id": item.item_id,
+                            "link_data": item.link_data,
+                            "author_link": item.author_link,
                         }
                     )
             await db.commit()

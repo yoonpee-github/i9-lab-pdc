@@ -54,6 +54,11 @@ const LoginPage = () => {
         "Chanatip",
         "Lab",
         "Lab2",
+        "Lab_Earth",
+        "Lab_Benz",
+        "Lab_Champ",
+        "Lab_Pruk",
+        "Lab_Pech",
       ];
 
       if (validUsers.includes(username) && username === password) {

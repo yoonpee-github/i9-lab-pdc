@@ -19,5 +19,6 @@ app.add_middleware(
 app.include_router(commons_routers(get_common_pg_async_db), prefix="/api/commons")
 app.mount("/uploaded_files", StaticFiles(directory="uploaded_files"), name="uploaded_files")
 app.mount("/comment_image", StaticFiles(directory="comment_image"), name="comment_image")
+app.mount("/stl_upload", StaticFiles(directory="stl_upload"), name="stl_upload")
 # app.mount("/frontend/Upload", StaticFiles(directory="C:/Users/nt/Desktop/Code/asd/WS/frontend/Upload"), name="upload")
 
