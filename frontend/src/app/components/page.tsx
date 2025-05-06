@@ -219,7 +219,7 @@ const DataTable: React.FC = () => {
             item.pt_ohn?.toLowerCase().includes(searchQuery.toLowerCase())
           : true) &&
         (searchQuerystatus.includes("All") ||
-          !item.status_data || // <<-- ถ้าไม่มีค่า เอาเลย
+          !item.status_data ||
           (item.status_data &&
             searchQuerystatus.includes(item.status_data.toLowerCase()))) &&
         (searchQueryproduct.includes("All") ||
@@ -231,7 +231,7 @@ const DataTable: React.FC = () => {
               .map((s) => s.trim().toLowerCase())
               .some((brcName) =>
                 brc
-                  .split(",") // เปลี่ยนจาก Array เป็น String และแยกค่า
+                  .split(",")
                   .some((branch) =>
                     branch.toLowerCase().includes(brcName.toLowerCase())
                   )
@@ -251,6 +251,7 @@ const DataTable: React.FC = () => {
       "เลข HN",
       "ชนิด",
       "Due Date",
+      "วันนัดลูกค้าใหม่", // ✅ เพิ่มคอลัมน์ใหม่
       "จำนวน",
       "เลขที่",
       "ชื่อแพทย์",
@@ -259,24 +260,33 @@ const DataTable: React.FC = () => {
       "เวลาสถานะ",
     ];
 
-    const csvData = filteredData.map((item) => [
-      `"${item.Name || ""}"`,
-      `"${item.pt_ohn || ""}"`,
-      `"${item.prd_name || ""}"`,
-      `"${
-        item.date_of_book
-          ? format(new Date(item.date_of_book), "dd/MM/yyyy")
-          : ""
-      }"`,
-      `"${item.item_qty || ""}"`,
-      `"${item.lc_no || ""}"`,
-      `"${item.doctor_name || ""}"`,
-      `"${item.brc_sname || ""}"`,
-      `"${item.status_data || "รอช่างมารับงาน"}"`,
-      `"${
-        item.date_of_inserts ? item.date_of_inserts : item.date_of_rcp || ""
-      }"`,
-    ]);
+    const csvData = filteredData.map((item) => {
+      const finishDisplayDate = item.finish_date || item.date_of_book;
+
+      return [
+        `"${item.Name || ""}"`,
+        `"${item.pt_ohn || ""}"`,
+        `"${item.prd_name || ""}"`,
+        `"${
+          item.date_of_book
+            ? format(new Date(item.date_of_book), "dd/MM/yyyy")
+            : ""
+        }"`,
+        `"${
+          finishDisplayDate
+            ? format(new Date(finishDisplayDate), "dd/MM/yyyy")
+            : ""
+        }"`, // ✅ ใส่วันที่งานเสร็จตาม logic
+        `"${item.item_qty || ""}"`,
+        `"${item.lc_no || ""}"`,
+        `"${item.doctor_name || ""}"`,
+        `"${item.brc_sname || ""}"`,
+        `"${item.status_data || "รอช่างมารับงาน"}"`,
+        `"${
+          item.date_of_inserts ? item.date_of_inserts : item.date_of_rcp || ""
+        }"`,
+      ];
+    });
 
     const csvContent = [header, ...csvData].map((e) => e.join(",")).join("\n");
     const blob = new Blob(["\uFEFF" + csvContent], {
@@ -1775,71 +1785,72 @@ const DataTable: React.FC = () => {
       },
     },
 
-    {
-      title: "วันที่งานเสร็จ",
-      dataIndex: "finish_date",
-      key: "finish_date",
-      align: "center",
-      width: 55,
-      onHeaderCell: () => ({ style: { textAlign: "center" } }),
-      render: (_, record) => {
-        const formatDate = (text: any) => {
-          if (!text) return "";
-          const date = new Date(text);
-          date.setHours(date.getHours() + 7); //เพิ่ม7ชั่วโมง
-          return `${String(date.getDate()).padStart(2, "0")}/${String(
-            date.getMonth() + 1
-          ).padStart(2, "0")}/${date.getFullYear()} ${String(
-            date.getHours()
-          ).padStart(2, "0")}:${String(date.getMinutes()).padStart(
-            2,
-            "0"
-          )}:${String(date.getSeconds()).padStart(2, "0")} น.`;
-        };
-        return (
-          <div style={{ textAlign: "center" }}>
-            <Tooltip
-              title={
-                record.date_of_insertsss
-                  ? `Update At : ${formatDate(record.date_of_insertsss)} By : ${
-                      record.author_finishdate
-                    }`
-                  : "ไม่มีข้อมูล"
-              }
-            >
-              <DatePicker
-                value={
-                  record.finish_date
-                    ? dayjs(record.finish_date, "YYYY-MM-DD")
-                    : null
-                }
-                style={{ marginBottom: 8 }}
-                onChange={(date) => handleFinishDateChange(record.key, date)}
-                format="DD/MM/YYYY"
-                disabled={
-                  !(
-                    localStorage.getItem("username") === "Adminlab1" ||
-                    localStorage.getItem("username") === "Adminlab2" ||
-                    localStorage.getItem("username") === "Adminlab3" ||
-                    localStorage.getItem("username") === "Chanatip"
-                  )
-                }
-              />
-            </Tooltip>
-            {/* {record.date_of_insertsss && (
-              <div style={{ fontSize: "12px", color: "#888" }}>
-                <h4>อัพเดตเมื่อ :</h4>
-              </div>
-            )}
-            {record.date_of_insertsss && (
-              <div style={{ fontSize: "12px", color: "#888" }}>
-                {formatDate(record.date_of_insertsss)}
-              </div>
-            )} */}
-          </div>
-        );
-      },
-    },
+    // {
+    //   title: "วันที่งานเสร็จ",
+    //   dataIndex: "finish_date",
+    //   key: "finish_date",
+    //   align: "center",
+    //   width: 55,
+    //   onHeaderCell: () => ({ style: { textAlign: "center" } }),
+    //   render: (_, record) => {
+    //     const formatDate = (text: any) => {
+    //       if (!text) return "";
+    //       const date = new Date(text);
+    //       date.setHours(date.getHours() + 7); //เพิ่ม7ชั่วโมง
+    //       return `${String(date.getDate()).padStart(2, "0")}/${String(
+    //         date.getMonth() + 1
+    //       ).padStart(2, "0")}/${date.getFullYear()} ${String(
+    //         date.getHours()
+    //       ).padStart(2, "0")}:${String(date.getMinutes()).padStart(
+    //         2,
+    //         "0"
+    //       )}:${String(date.getSeconds()).padStart(2, "0")} น.`;
+    //     };
+    //     return (
+    //       <div style={{ textAlign: "center" }}>
+    //         <Tooltip
+    //           title={
+    //             record.date_of_insertsss
+    //               ? `Update At : ${formatDate(record.date_of_insertsss)} By : ${
+    //                   record.author_finishdate
+    //                 }`
+    //               : "ไม่มีข้อมูล"
+    //           }
+    //         >
+    //           <DatePicker
+    //             value={
+    //               record.finish_date
+    //                 ? dayjs(record.finish_date, "YYYY-MM-DD")
+    //                 : null
+    //             }
+    //             style={{ marginBottom: 8 }}
+    //             onChange={(date) => handleFinishDateChange(record.key, date)}
+    //             format="DD/MM/YYYY"
+    //             disabled={
+    //               !(
+    //                 localStorage.getItem("username") === "Adminlab1" ||
+    //                 localStorage.getItem("username") === "Adminlab2" ||
+    //                 localStorage.getItem("username") === "Adminlab3" ||
+    //                 localStorage.getItem("username") === "Chanatip"
+    //               )
+    //             }
+    //           />
+    //         </Tooltip>
+    //         {/* {record.date_of_insertsss && (
+    //           <div style={{ fontSize: "12px", color: "#888" }}>
+    //             <h4>อัพเดตเมื่อ :</h4>
+    //           </div>
+    //         )}
+    //         {record.date_of_insertsss && (
+    //           <div style={{ fontSize: "12px", color: "#888" }}>
+    //             {formatDate(record.date_of_insertsss)}
+    //           </div>
+    //         )} */}
+    //       </div>
+    //     );
+    //   },
+    // },
+
     // {
     //   title: "สถานะการเช็คไฟล์สแกน",
     //   dataIndex: "status_file",
@@ -2310,6 +2321,7 @@ const DataTable: React.FC = () => {
   ];
   // ✅ เงื่อนไขเพิ่ม column flie
   if (
+    storedUsername === "Chanatip" ||
     storedUsername === "Adminlab1" ||
     storedUsername === "Adminlab2" ||
     storedUsername === "Adminlab3" ||
@@ -2319,6 +2331,60 @@ const DataTable: React.FC = () => {
     storedUsername === "Lab_Pruk" ||
     storedUsername === "Lab_Pech"
   ) {
+    columns.push({
+      title: "วันนัดลูกค้าใหม่",
+      dataIndex: "finish_date",
+      key: "finish_date",
+      align: "center",
+      width: 55,
+      onHeaderCell: () => ({ style: { textAlign: "center" } }),
+      render: (_, record) => {
+        const formatDate = (text: any) => {
+          if (!text) return "";
+          const date = new Date(text);
+          date.setHours(date.getHours() + 7);
+          return `${String(date.getDate()).padStart(2, "0")}/${String(
+            date.getMonth() + 1
+          ).padStart(2, "0")}/${date.getFullYear()} ${String(
+            date.getHours()
+          ).padStart(2, "0")}:${String(date.getMinutes()).padStart(
+            2,
+            "0"
+          )}:${String(date.getSeconds()).padStart(2, "0")} น.`;
+        };
+
+        const displayDate = record.finish_date || record.date_of_book;
+
+        return (
+          <div style={{ textAlign: "center" }}>
+            <Tooltip
+              title={
+                record.date_of_insertsss
+                  ? `Update At : ${formatDate(record.date_of_insertsss)} By : ${
+                      record.author_finishdate
+                    }`
+                  : "ไม่มีข้อมูล"
+              }
+            >
+              <DatePicker
+                value={displayDate ? dayjs(displayDate, "YYYY-MM-DD") : null}
+                style={{ marginBottom: 8 }}
+                onChange={(date) => handleFinishDateChange(record.key, date)}
+                format="DD/MM/YYYY"
+                disabled={
+                  !(
+                    localStorage.getItem("username") === "Adminlab1" ||
+                    localStorage.getItem("username") === "Adminlab2" ||
+                    localStorage.getItem("username") === "Adminlab3" ||
+                    localStorage.getItem("username") === "Chanatip"
+                  )
+                }
+              />
+            </Tooltip>
+          </div>
+        );
+      },
+    });
     columns.push({
       title: "เช็คไฟล์สแกน",
       dataIndex: "status_file",
